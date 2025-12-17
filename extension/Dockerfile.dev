@@ -1,0 +1,30 @@
+# 開発用 Dockerfile
+# 参考: https://bun.com/docs/guides/ecosystem/docker
+
+# 公式Bunイメージを使用
+# 公式Bunイメージを使用
+FROM oven/bun:1 AS base
+WORKDIR /usr/src/app
+
+# 作業ディレクトリの所有権をbunユーザーに変更
+RUN chown -R bun:bun /usr/src/app
+
+# 以降のコマンドをbunユーザーで実行
+USER bun
+
+# 依存関係をインストール
+# 開発環境なので devDependencies も含めます
+COPY --chown=bun:bun package.json bun.lock ./
+
+# 依存関係のインストール
+# 注意: bun.lockが存在しない場合は --frozen-lockfile を削除してください
+RUN bun install
+
+# ソースコードをコピー
+COPY --chown=bun:bun . .
+
+# 開発用サーバー起動
+# package.json の "dev" スクリプトを実行することを想定しています
+# ホットリロード（--watch）などが設定されていることを確認してください
+EXPOSE 5173/tcp
+ENTRYPOINT [ "bun", "run", "dev" ]

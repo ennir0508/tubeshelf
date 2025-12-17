@@ -1,0 +1,16 @@
+services:
+  extension:
+    container_name: tubeshelf-ext-dev
+    build:
+      context: ./extension
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # ソースコードをホストと同期（ホットリロード用）
+      - ./extension:/usr/src/app
+      # コンテナ内の node_modules をホストで上書きしないようにボリューム化
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+    tty: true
