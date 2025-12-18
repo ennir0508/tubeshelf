@@ -2,8 +2,8 @@ services:
   extension:
     container_name: tubeshelf-ext-dev
     build:
-      context: ./extension
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./docker/extension.dev.dockerfile
     ports:
       - "5173:5173"
     volumes:

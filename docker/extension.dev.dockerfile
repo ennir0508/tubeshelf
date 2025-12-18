@@ -14,7 +14,7 @@ USER bun
 
 # 依存関係をインストール
 # 開発環境なので devDependencies も含めます
-COPY --chown=bun:bun package.json bun.lock ./
+COPY --chown=bun:bun ./extension/package.json ./extension/bun.lock ./
 
 # 依存関係のインストール
 # 注意: bun.lockが存在しない場合は --frozen-lockfile を削除してください
