@@ -11,14 +11,23 @@ Chrome 拡張機能としてのビルド手順も併せて説明します。
 
 ## 2. プロジェクトの新規作成 (New Project Creation)
 
+プロジェクトを新規作成する手順です。プロジェクト作成済である場合は不要です。
+
 ### プロジェクトディレクトリ 作成
+
+以下のコマンドを実行して、プロジェクトディレクトリを作成します。
+
+```bash
+mkdir <project_name>
+```
 
 ### Vite プロジェクト作成
 
-以下のコマンドを実行して、Vite プロジェクトを作成してください。
+Viteを用いてカレントディレクトリにプロジェクトを作成します。
 
 ```bash
-docker run --rm -v ${PWD}/app:/home/bun/app oven/bun bun create vite . --template react-ts   
+docker run --rm -v ${PWD}:/home/bun/app oven/bun bun create vite . --template react-ts
+docker run --rm -v ${PWD}:/home/bun/app oven/bun bun install --lockfile-only
 ```
 
 ### Dockerfile 作成
@@ -49,18 +58,38 @@ ENTRYPOINT [ "bun", "run", "dev" ]
 services:
   app:
     build:
-      context: ./app
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5173:5173"
     volumes:
       # ソースコードをホストと同期（ホットリロード用）
-      - ./app:/usr/src/app
+      - .:/usr/src/app
       # コンテナ内の node_modules をホストで上書きしないようにボリューム化
       - /usr/src/app/node_modules
     environment:
       - NODE_ENV=development
     tty: true
+```
+
+### .dockerignore 作成
+
+```dockerignore
+node_modules
+Dockerfile*
+docker-compose*
+.dockerignore
+.git
+.gitignore
+README.md
+LICENSE
+.vscode
+Makefile
+helm-charts
+.env
+.editorconfig
+.idea
+coverage*
 ```
 
 ### package.json 修正
@@ -69,7 +98,7 @@ services:
 
 ```json
 "scripts": {
-    "dev": "bunx --bun vite --host",
+    "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -77,6 +106,14 @@ services:
 ```
 
 ## 3. 開発環境の起動 (Development Setup)
+
+### イメージのビルド
+
+以下のコマンドを実行して、開発用イメージをビルドします。
+
+```bash
+docker compose build
+```
 
 ### コンテナの起動
 
