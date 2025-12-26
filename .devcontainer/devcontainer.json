@@ -1,0 +1,16 @@
+{
+    "name": "TubeShelf Extension",
+    "dockerComposeFile": "../docker-compose.yaml",
+    "service": "extension",
+    "workspaceFolder": "/usr/src/app",
+    "remoteUser": "bun",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "oven.bun-vscode",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+}

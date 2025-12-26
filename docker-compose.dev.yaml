@@ -4,13 +4,14 @@ services:
     build:
       context: .
       dockerfile: ./docker/extension.dev.dockerfile
+    tty: true
+    working_dir: /usr/src/app
     ports:
-      - "5173:5173"
+      - "3000:3000"
     volumes:
-      # ソースコードをホストと同期（ホットリロード用）
       - ./extension:/usr/src/app
-      # コンテナ内の node_modules をホストで上書きしないようにボリューム化
+      - ./docs:/usr/src/app/docs
+      - ./docker/setup.sh:/usr/src/app/setup.sh
       - /usr/src/app/node_modules
     environment:
       - NODE_ENV=development
-    tty: true
