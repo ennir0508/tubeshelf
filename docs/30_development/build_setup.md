@@ -19,15 +19,16 @@ Chrome 拡張機能としてのビルド手順も併せて説明します。
 
 ```bash
 mkdir <project_name>
+cd <project_name>
 ```
 
-### Vite プロジェクト作成
+### WXT プロジェクト作成
 
-Viteを用いてカレントディレクトリにプロジェクトを作成します。
+WXTを用いてカレントディレクトリにプロジェクトを作成します。
 
 ```bash
-docker run --rm -v ${PWD}:/home/bun/app oven/bun bun create vite . --template react-ts
-docker run --rm -v ${PWD}:/home/bun/app oven/bun bun install --lockfile-only
+docker run --rm -u bun -v ${PWD}/app:/home/bun/app oven/bun bunx wxt@latest init
+docker run --rm -u bun -v ${PWD}/app:/home/bun/app oven/bun bun install --lockfile-only
 ```
 
 ### Dockerfile 作成
@@ -36,40 +37,42 @@ docker run --rm -v ${PWD}:/home/bun/app oven/bun bun install --lockfile-only
 
 ```dockerfile
 FROM oven/bun:1 AS base
+
 WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y wget unzip procps chromium
 
 RUN chown -R bun:bun /usr/src/app
 
 USER bun
 
-COPY --chown=bun:bun package.json bun.lock ./
+COPY --chown=bun:bun ./app .
+COPY --chown=bun:bun ./setup.sh .
 
 RUN bun install
+RUN bun run postinstall
 
-COPY --chown=bun:bun . .
+EXPOSE 3000/tcp
 
-EXPOSE 5173/tcp
-ENTRYPOINT [ "bun", "run", "dev" ]
+ENTRYPOINT ["./setup.sh"]
 ```
 
 ### docker-compose.yaml 作成
 
 ```yaml
 services:
-  app:
+  extension:
     build:
       context: .
-      dockerfile: Dockerfile
+    tty: true
     ports:
-      - "5173:5173"
+      - "3000:3000"
     volumes:
-      # ソースコードをホストと同期（ホットリロード用）
-      - .:/usr/src/app
-      # コンテナ内の node_modules をホストで上書きしないようにボリューム化
+      - ./app:/usr/src/app
+      - ./setup.sh:/usr/src/app/setup.sh
       - /usr/src/app/node_modules
     environment:
       - NODE_ENV=development
-    tty: true
 ```
 
 ### .dockerignore 作成
@@ -92,17 +95,44 @@ helm-charts
 coverage*
 ```
 
-### package.json 修正
+### wxt.config.ts 修正
 
-`package.json` の `scripts` セクションを以下のように修正してください。
+`wxt.config.ts` の内容を以下のように修正してください。
 
-```json
-"scripts": {
-    "dev": "vite --host",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-}
+```ts
+export default defineConfig({
+  modules: ['@wxt-dev/module-react'],
+  dev: {
+    server: {
+      host: '0.0.0.0',
+      port: 3000,
+    }
+  },
+  webExt: {
+    disabled: true,
+  },
+  vite: () => ({
+    server: {
+      host: '0.0.0.0',
+      port: 3000,
+      strictPort: true,
+      hmr: {
+        port: 3000,
+      }
+    }
+  }),
+  manifest: {
+    action: {
+      default_title: "AppName",
+    },
+    web_accessible_resources: [
+      {
+        matches: ["*://*.google.com/*"],
+        resources: ["icon/*.png"],
+      },
+    ],
+  },
+});
 ```
 
 ## 3. 開発環境の起動 (Development Setup)
@@ -126,33 +156,28 @@ docker compose up
 - 初回起動時は Docker イメージのビルドと依存ライブラリのインストールが行われるため、時間がかかる場合があります。
 - `./app` ディレクトリがボリュームマウントされ、ホスト側でのコード変更がコンテナ内に即座に反映されます。
 
+または、VSCode で `Dev Containers: Reopen in Container` を実行して、Dev Container を起動してください。
+
+### アプリケーションの起動
+
+以下のコマンドを実行して、開発用コンテナを起動します。
+
+```bash
+docker compose exec -it app bun run dev
+```
+
+Dev Container を起動している場合は、コンテナ上で以下のコマンドを実行してください。
+
+```bash
+bun run dev
+```
+
 ### 動作確認
 
 コンテナ起動後、Vite 開発サーバーが立ち上がります。
-ブラウザで `http://localhost:5173` にアクセスできるか確認してください。
-（※Chrome 拡張機能特有の API を使用している部分は、通常のブラウザページでは動作しない場合があります）
 
-## 4. 拡張機能のビルド (Build Extension)
+`chrome://extensions/` にアクセスして、デベロッパーモードを有効にし、「パッケージ化されていない拡張機能を読み込む」から、`<project_name>/app/.output/chrome-mv3-dev` ディレクトリを選択してください。
 
-Chrome に読み込ませるための製品ビルド（`dist` ディレクトリの生成）を行います。
-
-### コンテナ内でビルドする場合（推奨）
-
-```bash
-docker compose exec app bun run build
-```
-
-### ローカル環境でビルドする場合
-
-ローカルに `bun` がインストールされている場合は、以下のように直接ビルドすることも可能です。
-
-```bash
-cd app
-bun install
-bun run build
-```
-
-ビルドが完了すると、`app/dist` ディレクトリに成果物が出力されます。
 
 ### ライブラリの追加
 
@@ -160,16 +185,6 @@ bun run build
 docker compose exec app bun add <ライブラリ名>
 ```
 
-## 5. Chrome への読み込み (Load in Chrome)
+## 4. 開発フロー (Development Flow)
 
-1. Chrome ブラウザを開き、アドレスバーに `chrome://extensions` と入力して移動します。
-2. 画面右上の **「デベロッパーモード」 (Developer mode)** トグルを ON にします。
-3. 左上の **「パッケージ化されていない拡張機能を読み込む」 (Load unpacked)** ボタンをクリックします。
-4. 本プロジェクトの `extension/dist` ディレクトリを選択します。
-
-これで拡張機能がインストールされます。
-
-## 6. 開発フロー (Development Flow)
-
-- **ホットリロード**: `docker compose up` で起動している間は、ファイルの変更を検知して自動的に再ビルドが行われます (HMR)。
-- **拡張機能の更新**: ポップアップやオプションページの変更は HMR で反映されますが、`manifest.json` や `content script`、`background script` に変更を加えた場合は、`chrome://extensions` ページで**更新ボタン**（回転矢印アイコン）を押して拡張機能を再読み込みする必要があります。
+- **ホットリロード**: WXT は内部で Viteを採用しており、 `bun run dev` で起動している間、ファイルの変更を検知して自動的に再ビルドが行われます。
