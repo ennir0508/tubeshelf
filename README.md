@@ -40,11 +40,12 @@ YouTubeのチャンネルを探すときにいっぱいありすぎて困った�
 | 言語・フレームワーク等 | バージョン |
 | ---------------------- | ---------- |
 | manifest.json          | v3         |
-| React                  |            |
-| Tailwind CSS           |            |
-| Bun                    |            |
-| Vite                   |            |
-| Docker                 |            |
+| WXT                    | 0.20.13    |
+| React                  | 19.2.3     |
+| Tailwind CSS           | 4.1        |
+| Bun                    | 1.3.5      |
+| Vite                   | 7.3.0      |
+| Docker                 | 28.3.2     |
 
 その他のパッケージのバージョンは `package.json` を参照してください
 
@@ -54,19 +55,29 @@ YouTubeのチャンネルを探すときにいっぱいありすぎて困った�
 
 ```sh
 .
-├── doc
-│   ├── 00_requirements
-│   ├── 10_basic_design
-│   ├── 20_detail_design
-│   ├── 30_development
-│   ├── 40_unit_test
-│   ├── 50_integration_test
-│   └── 60_deployment
-├── app
-│   ├── manifest.json
+├── doc/ : 各種ドキュメント
+├── docker/
+│   ├── extension.dev.dockerfile
+│   └── setup.sh
+├── extension/
+│   ├── .output/
+│   │   └── chrome-mv3-dev : ビルド後ファイル
+│   ├── .wxt/
+│   ├── assets/
+│   ├── entrypoint/ : ソースコード
+│   │   ├── popup/
+│   │   ├── background.ts
+│   │   └── content.ts
+│   ├── node_modules/
+│   ├── public/
+│   ├── .gitignore
+│   ├── bun.lock
 │   ├── package.json
-│   ├── Dockerfile
-│   └── docker-compose.yaml
+│   ├── README.md
+│   ├── tsconfig.json
+│   └── wxt.config.ts
+├── docker-compose.dev.yaml
+├── docker-compose.yaml(symbolic link)
 ├── AGENTS.md
 └── README.md
 ```
