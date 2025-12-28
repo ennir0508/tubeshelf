@@ -7,6 +7,11 @@ YouTubeユーザー、特に多数のチャンネル（50以上等）を登録�
 
 ### 1.2. 目的
 登録チャンネルを任意の「カテゴリ」に分類・整理できるChrome拡張機能「TubeShelf」を開発し、ユーザーが快適に登録チャンネルをブラウズできるようにする。Gmailのラベル機能のような階層構造を持つ整理機能を提供する。
+<div style="display: flex; justify-content: center;">
+    <img src="./img/label_sample_light.png" alt="作成後イメージ（ライトモード）" style="margin-right: 2rem;">
+    <img src="./img/label_sample_dark.png" alt="作成後イメージ（ダークモード）">
+</div>
+
 
 ### 1.3. ターゲットユーザー (ペルソナ)
 - **属性**: YouTubeを日常的に長時間視聴するユーザー。
